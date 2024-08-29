@@ -232,7 +232,7 @@ INPUT_MAX_ANALOG_ACTION_DATA :: 1.0
 // Structs
 // -------
 
-SteamNetworkingMessage :: struct #align (CALLBACK_ALIGN) {
+SteamNetworkingMessage :: struct {
     pData:            rawptr,
     cbSize:           i32,
     conn:             HSteamNetConnection,
@@ -3736,15 +3736,21 @@ SteamItemDetails :: struct #align (CALLBACK_ALIGN) {
     unFlags:     u16,
 }
 
-SteamNetworkingIPAddr :: struct #align (CALLBACK_ALIGN) {
-    ipv6: [16]u8,
-    port: u16,
+SteamNetworkingIPAddr :: struct {
+    using _: struct #raw_union {
+        ipv6: [16]u8,
+        //IPv4 field
+    },
+    port:    u16,
 }
 
-SteamNetworkingIdentity :: struct #align (CALLBACK_ALIGN) {
-    eType:              ESteamNetworkingIdentityType,
-    cbSize:             i32,
-    szUnknownRawString: [128]u8,
+SteamNetworkingIdentity :: struct #packed {
+    eType:  ESteamNetworkingIdentityType,
+    cbSize: i32,
+    val:    struct #raw_union {
+        m_ip:       SteamNetworkingIPAddr,
+        m_reserved: [32]u32, // Pad structure to leave easy room for future expansion
+    },
 }
 
 SteamNetConnectionInfo :: struct #align (CALLBACK_ALIGN) {
@@ -3789,14 +3795,20 @@ SteamNetConnectionRealTimeLaneStatus :: struct #align (CALLBACK_ALIGN) {
     reserved:              [10]u32,
 }
 
-SteamNetworkPingLocation :: struct #align (CALLBACK_ALIGN) {
+SteamNetworkPingLocation :: struct {
     data: [512]u8,
 }
 
-SteamNetworkingConfigValue :: struct #align (CALLBACK_ALIGN) {
+SteamNetworkingConfigValue :: struct {
     eValue:    ESteamNetworkingConfigValue,
     eDataType: ESteamNetworkingConfigDataType,
-    i64:       i64,
+    val:       struct #raw_union {
+        int32:  i32,
+        int64:  i64,
+        float:  f32,
+        string: cstring,
+        ptr:    rawptr,
+    },
 }
 
 SteamDatagramHostedAddress :: struct #align (CALLBACK_ALIGN) {
